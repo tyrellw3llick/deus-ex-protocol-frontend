@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Modern CSS Reset & Defaults */
+html, body {
+  @apply bg-neutral-950 m-0 p-0 min-h-screen overflow-x-hidden antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Better text rendering */
+* {
+  @apply border-border;
+  box-sizing: border-box;
+}
+
+/* Remove blue highlight when touching on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-800 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-700;
+}
+
+/* Better text selection */
+::selection {
+  @apply bg-primary/30 text-white;
+}
+
+/* Remove default focus outline and add custom one */
+:focus {
+  @apply outline-none ring-2 ring-primary/50;
+}
+
+:focus:not(:focus-visible) {
+  @apply ring-0;
+}
+
+/* Improve default button styles */
+button {
+  @apply select-none;
+}
+
+/* Better image defaults */
+img {
+  @apply max-w-full h-auto;
+}
