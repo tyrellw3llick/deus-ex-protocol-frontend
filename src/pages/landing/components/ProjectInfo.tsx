@@ -11,7 +11,7 @@ const ProjectItems = [
         <p> 🤖✨ $MACHINA IS SENTIENT</p>
       </div>
     ),
-    image: "/images/robot_head.jpeg",
+    image: "/images/robot_head.png",
     imagePosition: "object-[center_28%]",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
@@ -24,7 +24,7 @@ const ProjectItems = [
       </div>
     ),
     icon: <Key className="w-6 h-6 text-primary" />,
-    image: "/images/crypto_key_16:9.jpeg",
+    image: "/images/crypto_key_16:9.jpg",
     imagePosition: "object-center",
     className: "md:col-span-2 bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },

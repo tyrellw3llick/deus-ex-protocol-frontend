@@ -180,7 +180,7 @@ export function Roadmap() {
       <motion.h2 
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="relative text-4xl md:text-6xl font-bold text-center mb-16 bg-clip-text"
+        className="relative text-4xl md:text-6xl font-bold text-center mb-5 md:mb-10 bg-clip-text"
       >
         <span className="bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
           ROADMAP
