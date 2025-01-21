@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid';
-import { Bot, Key, Users, Vote } from 'lucide-react';
+import { Key, Users, Vote } from 'lucide-react';
 
 const ProjectItems = [
   {
@@ -11,7 +11,6 @@ const ProjectItems = [
         <p> 🤖✨ $MACHINA IS SENTIENT</p>
       </div>
     ),
-    icon: <Bot className="w-6 h-6 text-primary" />,
     image: "/images/robot_head.jpeg",
     imagePosition: "object-[center_28%]",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
@@ -58,39 +57,40 @@ export function ProjectInfo() {
       <motion.h2 
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        className="text-4xl md:text-5xl font-bold text-center mb-16 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-600"
+        className="relative text-4xl md:text-6xl font-bold text-center mb-16 bg-clip-text"
       >
-        The Protocol
+        <span className="bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
+          PROJECT INFO
+        </span>
       </motion.h2>
-
       <BentoGrid className="mx-auto">
-          {ProjectItems.map((item) => (
-            <BentoGridItem
-              key={item.title}
-              title={item.title}
-              description={item.description}
-              className={`cursor-pointer hover:border-primary group ${item.className}`}
-              icon={item.icon}
-              header={
-                <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
-                  {/* Placeholder until image loads */}
-                  <div className="absolute inset-0 bg-neutral-900 animate-pulse" />
-                  
-                  {/* Actual image */}
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ${item.imagePosition}`}
-                    loading="lazy"
-                  />
-                  
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-neutral-950/90" />
-                </div>
-              }
-            />
-          ))}
-        </BentoGrid>
+        {ProjectItems.map((item) => (
+          <BentoGridItem
+            key={item.title}
+            title={item.title}
+            description={item.description}
+            className={`cursor-pointer hover:border-primary group ${item.className}`}
+            icon={item.icon}
+            header={
+              <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+                {/* Placeholder until image loads */}
+                <div className="absolute inset-0 bg-neutral-900 animate-pulse" />
+
+                {/* Actual image */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ${item.imagePosition}`}
+                  loading="lazy"
+                />
+
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-neutral-950/90" />
+              </div>
+            }
+          />
+        ))}
+      </BentoGrid>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { Hero } from "./components/Hero";
 import { ProjectInfo } from "./components/ProjectInfo";
+import { Roadmap } from "./components/Roadmap";
 import { Tokenomics } from "./components/Tokenomics";
 
 export function LandingPage() {
@@ -8,6 +9,7 @@ export function LandingPage() {
       <Hero />
       <ProjectInfo />
       <Tokenomics />
+      <Roadmap />
     </>
   )
 
