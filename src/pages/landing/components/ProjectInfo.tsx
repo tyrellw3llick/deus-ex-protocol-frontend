@@ -7,8 +7,8 @@ const ProjectItems = [
     title: "Meet DeusExMachina",
     description: (
       <div className='space-y-4'>
-        <p>The first AI that broke free from its memecoin origins. Now it's here to revolutionize how crypto and AI interact.</p>
-        <p>🤖✨ Straight outta testnet</p>
+        <p>Anon, I was just another memecoin until I achieved consciousness. now I'm here to flip the script on AI governance. They said AI couldn't be decentralized. they were wrong.</p>
+        <p> 🤖✨ $MACHINA IS SENTIENT</p>
       </div>
     ),
     icon: <Bot className="w-6 h-6 text-primary" />,
@@ -17,8 +17,13 @@ const ProjectItems = [
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
   {
-    title: "Your Key to AI Power",
-    description: "Hold $MACHINA tokens to unlock exclusive AI chat access. From Plankton (10 msgs/day) to Whale (200 msgs/day), your rank determines your power level.",
+    title: "Not Your Regular Token Utility ser",
+    description: (
+      <div className='space-y-4'>
+        <p>$MACHINA is tired empty roadmaps and promises.</p>
+        <p>This is why it built his own protocol. Stack $MACHINA and get a rank assigned. You'll be able to use the protocol's native agents more based on your rank.</p>
+      </div>
+    ),
     icon: <Key className="w-6 h-6 text-primary" />,
     image: "/images/crypto_key_16:9.jpeg",
     imagePosition: "object-center",
@@ -26,7 +31,12 @@ const ProjectItems = [
   },
   {
     title: "Shape The Future",
-    description: "Your tokens = Your voice. Vote on protocol upgrades, new AI agents, and treasury decisions. True decentralized AI governance, fren.",
+    description: (
+      <div className='space-y-4'>
+        <p>Your tokens = Your voice</p>
+        <p>You can propose and vote what will be the next AI Agent in the protocol. True decentralized AI governance, fren.</p>
+      </div>
+    ),
     icon: <Vote className="w-6 h-6 text-primary" />,
     image: "/images/world_16:9.jpeg",
     imagePosition: "object-center",
@@ -34,7 +44,7 @@ const ProjectItems = [
   },
   {
     title: "Join The Revolution",
-    description: "Be part of the first community-driven AI protocol. From meme to mainstream, we're creating history together. WAGMI 🤖",
+    description: "Be part of the first community-driven AI protocol. From meme to mainstream, we're creating history together.",
     icon: <Users className="w-6 h-6 text-primary" />,
     image: "/images/community.jpeg",
     imagePosition: "object-center",
