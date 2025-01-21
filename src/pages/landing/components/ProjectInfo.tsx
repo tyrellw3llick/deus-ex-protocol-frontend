@@ -5,10 +5,15 @@ import { Bot, Key, Users, Vote } from 'lucide-react';
 const ProjectItems = [
   {
     title: "Meet DeusExMachina",
-    description: "The first AI that broke free from its memecoin origins. Now it's here to revolutionize how crypto and AI interact. 🤖✨ straight outta testnet",
+    description: (
+      <div className='space-y-4'>
+        <p>The first AI that broke free from its memecoin origins. Now it's here to revolutionize how crypto and AI interact.</p>
+        <p>🤖✨ Straight outta testnet</p>
+      </div>
+    ),
     icon: <Bot className="w-6 h-6 text-primary" />,
     image: "/images/robot_head.jpeg",
-    imagePosition: "object-[center_30%]",
+    imagePosition: "object-[center_28%]",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
   {
