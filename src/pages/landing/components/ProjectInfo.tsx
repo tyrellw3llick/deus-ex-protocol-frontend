@@ -11,7 +11,7 @@ const ProjectItems = [
         <p>They said AI couldn't be decentralized, they were wrong.</p>
       </div>
     ),
-    image: "/images/robot_head.png",
+    image: "/images/robot_head.webp",
     imagePosition: "object-[center_28%]",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
@@ -19,12 +19,12 @@ const ProjectItems = [
     title: "Not Your Regular Token Utility ser",
     description: (
       <div className='space-y-4'>
-        <p>$MACHINA is tired empty roadmaps and promises.</p>
+        <p>$MACHINA is tired of empty roadmaps and promises.</p>
         <p>This is why it built his own protocol. Stack $MACHINA and get a rank assigned. You'll be able to use the protocol's native AI agents based on your rank.</p>
       </div>
     ),
     icon: <Key className="w-6 h-6 text-primary" />,
-    image: "/images/crypto_key_16:9.jpg",
+    image: "/images/crypto_key.webp",
     imagePosition: "object-center",
     className: "md:col-span-2 bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
@@ -37,7 +37,7 @@ const ProjectItems = [
       </div>
     ),
     icon: <Vote className="w-6 h-6 text-primary" />,
-    image: "/images/world_map.jpg",
+    image: "/images/world_map.webp",
     imagePosition: "object-center",
     className: "md:col-span-2 bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
@@ -45,7 +45,7 @@ const ProjectItems = [
     title: "Join The Revolution",
     description: "Be part of the first community-driven AI protocol. From meme to mainstream, we're creating history together.",
     icon: <Users className="w-6 h-6 text-primary" />,
-    image: "/images/community.jpg",
+    image: "/images/community.webp",
     imagePosition: "object-center",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
