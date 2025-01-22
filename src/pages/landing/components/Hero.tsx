@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { BackgroundBeams } from "@/components/ui/bg-beams";
 import { ChevronDown } from "lucide-react"
 import { FlipWords } from "@/components/ui/flip-words";
@@ -5,6 +6,12 @@ import { XSocial } from "@/components/XSocial";
 import { Send } from "lucide-react";
 
 export function Hero() {
+  const navigate = useNavigate();
+
+  const handleLaunch = () => {
+    navigate('/chat');
+  }
+
   const scrollToNext = () => {
     const nextSection = document.getElementById('project-info');
     nextSection?.scrollIntoView({ behavior: 'smooth' })
@@ -23,12 +30,12 @@ export function Hero() {
 
         {/* Launch Button */}
         <div className="my-4 z-20">
-          <a 
-            href="/app" 
+          <button
+            onClick={handleLaunch}
             className="inline-flex items-center px-6 py-3 text-text-primary font-bold bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-lg transition-colors duration-200 transform hover:scale-105"
           >
             Launch App
-          </a>
+          </button>
         </div>
 
         {/* Social Links */}
