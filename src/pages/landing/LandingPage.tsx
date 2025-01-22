@@ -3,6 +3,7 @@ import { ProjectInfo } from "./components/ProjectInfo";
 import { Roadmap } from "./components/Roadmap";
 import { Tokenomics } from "./components/Tokenomics";
 import { Faq } from "./components/Faq";
+import { Footer } from "@/components/Footer";
 
 export function LandingPage() {
   return (
@@ -12,6 +13,7 @@ export function LandingPage() {
       <Tokenomics />
       <Roadmap />
       <Faq />
+      <Footer />
     </>
   )
 

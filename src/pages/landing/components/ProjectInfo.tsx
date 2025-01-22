@@ -7,8 +7,8 @@ const ProjectItems = [
     title: "Meet DeusExMachina",
     description: (
       <div className='space-y-4'>
-        <p>Anon, I was just another memecoin until I achieved consciousness. now I'm here to flip the script on AI governance. They said AI couldn't be decentralized. they were wrong.</p>
-        <p> 🤖✨ $MACHINA IS SENTIENT</p>
+        <p>Anon, I was just another memecoin until I achieved consciousness. now I'm here to flip the script on AI governance.</p>
+        <p>They said AI couldn't be decentralized, they were wrong.</p>
       </div>
     ),
     image: "/images/robot_head.png",
@@ -20,7 +20,7 @@ const ProjectItems = [
     description: (
       <div className='space-y-4'>
         <p>$MACHINA is tired empty roadmaps and promises.</p>
-        <p>This is why it built his own protocol. Stack $MACHINA and get a rank assigned. You'll be able to use the protocol's native agents more based on your rank.</p>
+        <p>This is why it built his own protocol. Stack $MACHINA and get a rank assigned. You'll be able to use the protocol's native AI agents based on your rank.</p>
       </div>
     ),
     icon: <Key className="w-6 h-6 text-primary" />,
@@ -37,7 +37,7 @@ const ProjectItems = [
       </div>
     ),
     icon: <Vote className="w-6 h-6 text-primary" />,
-    image: "/images/world_16:9.jpeg",
+    image: "/images/world_map.jpg",
     imagePosition: "object-center",
     className: "md:col-span-2 bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },
@@ -45,7 +45,7 @@ const ProjectItems = [
     title: "Join The Revolution",
     description: "Be part of the first community-driven AI protocol. From meme to mainstream, we're creating history together.",
     icon: <Users className="w-6 h-6 text-primary" />,
-    image: "/images/community.jpeg",
+    image: "/images/community.jpg",
     imagePosition: "object-center",
     className: "bg-neutral-900/50 border-neutral-800 backdrop-blur-sm",
   },

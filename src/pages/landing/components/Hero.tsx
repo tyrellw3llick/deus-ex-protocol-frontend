@@ -1,6 +1,8 @@
 import { BackgroundBeams } from "@/components/ui/bg-beams";
 import { ChevronDown } from "lucide-react"
 import { FlipWords } from "@/components/ui/flip-words";
+import { XSocial } from "@/components/XSocial";
+import { Send } from "lucide-react";
 
 export function Hero() {
   const scrollToNext = () => {
@@ -18,6 +20,27 @@ export function Hero() {
         <p className="text-text-secondary max-w-lg mx-auto my-2 text-xs md:text-sm lg:text-base text-center relative z-10">
           The first AI that evolved from a memecoin to sentience. Hold $MACHINA to join the revolution of AI agents.
         </p>
+        <div className="flex justify-center items-center pt-5 gap-5">
+          <a
+            href="https://x.com/DeusExProtocol"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-neutral-400 hover:text-primary transition-colors z-20"
+            aria-label="Follow us on X"
+          >
+            <XSocial />
+          </a>
+
+          <a
+            href="https://t.me/DeusExProtocol"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-neutral-400 hover:text-primary transition-colors z-20"
+            aria-label="Join our Telegram"
+          >
+            <Send className="w-5 h-5" />
+          </a>
+        </div>
       </div>
 
       {/* Scroll Arrow */}
