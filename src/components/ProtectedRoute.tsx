@@ -45,6 +45,7 @@ export function ProtectedRoute({ children }: Props) {
 
         if (response.data.success) {
           sessionStorage.setItem('token', response.data.data.token);
+          sessionStorage.setItem('userData', JSON.stringify(response.data.data.user));
           setIsAuthenticated(true);
         }
       } catch (err) {
