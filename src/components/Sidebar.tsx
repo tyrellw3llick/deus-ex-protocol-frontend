@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquarePlus, Bot, X, LogOut, RefreshCw } from 'lucide-react';
+import { MessageSquarePlus, Bot, X, LogOut, RefreshCw, MessageSquare, Vote } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { api } from '@/api/client';
@@ -186,6 +186,29 @@ export function Sidebar() {
             </div>
           )}
         </div>
+
+        {/* Mobile Navigation - Add this new section */}
+        <div className="md:hidden p-4 border-b border-neutral-800">
+          <nav className="flex flex-col space-y-2">
+            <Link
+              to="/chat"
+              onClick={close}
+              className="flex items-center space-x-2 text-neutral-400 hover:text-primary transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Chat</span>
+            </Link>
+            <Link
+              to="/voting"
+              onClick={close}
+              className="flex items-center space-x-2 text-neutral-400 hover:text-primary transition-colors"
+            >
+              <Vote className="w-4 h-4" />
+              <span>Vote</span>
+            </Link>
+          </nav>
+        </div>
+
 
         {/* Sidebar Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
