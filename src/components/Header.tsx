@@ -2,9 +2,10 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { api } from "@/api/client";
 import { User } from "@/types/auth";
 import { useWallet } from "@solana/wallet-adapter-react"
-import { LogOut, MessageSquare, RefreshCw, Vote } from "lucide-react";
+import { LogOut, MessageSquare, RefreshCw, Vote, Menu } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/context/SidebarContext";
 
 const RANK_BADGES = { 0: { name: 'PLANKTON', class: 'bg-neutral-600' },
   1: { name: 'APE', class: 'bg-green-600' },
@@ -15,6 +16,7 @@ const RANK_BADGES = { 0: { name: 'PLANKTON', class: 'bg-neutral-600' },
 export const Header = () => {
   const { disconnect, publicKey } = useWallet();
   const navigate = useNavigate();
+  const { toggle } = useSidebar();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userData, setUserData] = useState<User | null>(() => {
     const storedData = sessionStorage.getItem('userData');
@@ -47,6 +49,11 @@ export const Header = () => {
     }
   }
 
+  const handleToggle = () => {
+    console.log('Toggle clicked in header')
+    toggle();
+  }
+
   const handleDisconnect = async () => {
     try {
       await disconnect();
@@ -61,6 +68,13 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-neutral-800/50 bg-neutral-950/80 backdrop-blur-2xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
+          {/* Mobile menu button */}
+          <button
+            onClick={handleToggle}
+            className="md:hidden inline-flex items-center justify-center p-2 text-neutral-400 hover:text-primary transition-colors"
+          >
+            <Menu className="h-6 text-white w-6" />
+          </button>
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <NavLink 
