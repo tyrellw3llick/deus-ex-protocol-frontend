@@ -37,6 +37,7 @@ export const Header = () => {
 
       if (response.data.success) {
         setUserData(response.data.data);
+        console.log(response.data.data);
         sessionStorage.setItem('userData', JSON.stringify(response.data.data));
       }
     } catch (err) {
@@ -60,16 +61,6 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-neutral-800/50 bg-neutral-950/80 backdrop-blur-2xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <NavLink 
-              to="/" 
-              className="text-xl font-bold text-primary hover:text-primary/90 transition-colors"
-            >
-              MACHINA
-            </NavLink>
-          </div>
-
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <NavLink 
