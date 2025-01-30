@@ -4,12 +4,13 @@ import { MessageSquarePlus, Bot, X, LogOut, RefreshCw, MessageSquare, Vote } fro
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { api } from '@/api/client';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { AIAgent, AI_AGENTS, ConversationsResponse, ConversationPage, Conversation } from '@/types/chat.types';
+import { AIAgent, ConversationsResponse, ConversationPage, Conversation } from '@/types/chat.types';
 import { UserData, Rank } from '@/types/user.types';
 import { ConversationsLoadingSkeleton } from '@/utils/sidebarSkeletonLoader';
 import { useSidebar } from '@/context/SidebarContext';
+import { useAI } from '@/context/AiContext';
 import {
   Select,
   SelectContent,
@@ -27,16 +28,37 @@ const RANK_BADGES = {
   3: { name: 'WHALE', class: 'bg-purple-600' },
 } as const;
 
+interface AIResponse {
+  success: boolean;
+  data: AIAgent[];
+}
+
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
   const navigate = useNavigate();
   const { disconnect, publicKey } = useWallet();
-  const [selectedAgent, setSelectedAgent] = useState<AIAgent>(AI_AGENTS[0]);
+  const { selectedAgent, setSelectedAgent } = useAI();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(() => {
     const stored = sessionStorage.getItem('userData');
     return stored ? JSON.parse(stored) : null;
   });
+
+  // Fetch AI agents
+  const { data: agents = [], isLoading: isLoadingAgents } = useQuery<AIAgent[]>({
+    queryKey: ['ai-agents'],
+    queryFn: async () => {
+      const response = await api.get<AIResponse>('/api/ai');
+      return response.data.data;
+    },
+  });
+
+  // Set initial selected agent when data is loaded
+  useEffect(() => {
+    if (agents.length && !selectedAgent) {
+      setSelectedAgent(agents[0]);
+    }
+  }, [agents, selectedAgent, setSelectedAgent]);
 
   // Close sidebar on route change
   useEffect(() => {
@@ -45,7 +67,6 @@ export function Sidebar() {
     };
   }, [close]);
 
-  // Format utilities
   const formatAddress = (address: string) => {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
@@ -54,7 +75,6 @@ export function Sidebar() {
     return new Intl.NumberFormat().format(balance);
   };
 
-  // Handle balance refresh
   const handleRefreshBalance = async () => {
     if (isRefreshing) return;
     try {
@@ -72,7 +92,6 @@ export function Sidebar() {
     }
   };
 
-  // Handle wallet disconnect
   const handleDisconnect = async () => {
     try {
       await disconnect();
@@ -111,9 +130,9 @@ export function Sidebar() {
     getNextPageParam: (lastPage: ConversationPage) => lastPage.nextCursor,
   });
 
-  // Handle new conversation
   const handleNewConversation = () => {
-    navigate('/chat', { state: { aiName: selectedAgent.id } });
+    if (!selectedAgent) return;
+    navigate('/chat');
     close();
   };
 
@@ -187,7 +206,7 @@ export function Sidebar() {
           )}
         </div>
 
-        {/* Mobile Navigation - Add this new section */}
+        {/* Mobile Navigation */}
         <div className="md:hidden p-4 border-b border-neutral-800">
           <nav className="flex flex-col space-y-2">
             <Link
@@ -209,7 +228,6 @@ export function Sidebar() {
           </nav>
         </div>
 
-
         {/* Sidebar Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* New Chat Button */}
@@ -217,6 +235,7 @@ export function Sidebar() {
             <button
               onClick={handleNewConversation}
               className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+              disabled={!selectedAgent}
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>New Chat</span>
@@ -226,32 +245,40 @@ export function Sidebar() {
           {/* AI Agent Selector */}
           <div className="px-4 mb-4">
             <label className="text-xs text-neutral-400 mb-2 block">AI Agent</label>
-            <Select 
-              value={selectedAgent.id}
-              onValueChange={(value) => {
-                const agent = AI_AGENTS.find(a => a.id === value);
-                if (agent) setSelectedAgent(agent);
-              }}
-            >
-              <SelectTrigger className="bg-neutral-900 border-neutral-800">
-                <SelectValue>
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-primary" />
-                    <span className='text-primary'>{selectedAgent.name}</span>
-                  </div>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-900 border-neutral-800">
-                {AI_AGENTS.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
+            {isLoadingAgents ? (
+              <div className="h-9 bg-neutral-900 border border-neutral-800 rounded-md animate-pulse" />
+            ) : agents.length && selectedAgent ? (
+              <Select 
+                value={selectedAgent.id}
+                onValueChange={(value) => {
+                  const agent = agents.find(a => a.id === value);
+                  if (agent) setSelectedAgent(agent);
+                }}
+              >
+                <SelectTrigger className="bg-neutral-900 border-neutral-800">
+                  <SelectValue>
                     <div className="flex items-center gap-2">
                       <Bot className="h-4 w-4 text-primary" />
-                      <span className='text-neutral-400'>{agent.name}</span>
+                      <span className='text-primary'>{selectedAgent.name}</span>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-neutral-900 border-neutral-800">
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-primary" />
+                        <span className='text-neutral-400'>{agent.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="h-9 flex items-center justify-center text-neutral-400 bg-neutral-900 border border-neutral-800 rounded-md">
+                No agents available
+              </div>
+            )}
           </div>
 
           {/* Conversations List */}
@@ -259,26 +286,26 @@ export function Sidebar() {
             {isLoading ? (
               <ConversationsLoadingSkeleton />
             ) : (
-                <div className="space-y-1">
-                  {data?.pages.map((page, _i) =>
-                    page.conversations.map((conversation: Conversation) => (
-                      <Link
-                        key={conversation._id}
-                        to={`/chat/${conversation._id}`}
-                        onClick={close}
-                        className="block px-4 py-3 hover:bg-neutral-800 transition-colors"
-                      >
-                        <div className="text-sm text-neutral-200 truncate">
-                          {conversation.title || "New Conversation"}
-                        </div>
-                        <div className="text-xs text-neutral-400">
-                          {format(new Date(conversation.lastMessageAt), 'MMM d, yyyy')}
-                        </div>
-                      </Link>
-                    ))
-                  )}
-                </div>
-              )}
+              <div className="space-y-1">
+                {data?.pages.map((page, _i) =>
+                  page.conversations.map((conversation: Conversation) => (
+                    <Link
+                      key={conversation._id}
+                      to={`/chat/${conversation._id}`}
+                      onClick={close}
+                      className="block px-4 py-3 hover:bg-neutral-800 transition-colors"
+                    >
+                      <div className="text-sm text-neutral-200 truncate">
+                        {conversation.title || "New Conversation"}
+                      </div>
+                      <div className="text-xs text-neutral-400">
+                        {format(new Date(conversation.lastMessageAt), 'MMM d, yyyy')}
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
 
             {/* Load More Button */}
             {hasNextPage && (

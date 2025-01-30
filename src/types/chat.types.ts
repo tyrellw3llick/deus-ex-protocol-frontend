@@ -30,11 +30,17 @@ export interface AIAgent {
   avatar?: string;
 }
 
-// For now we'll hardcode the AI agents since they're not dynamic
-export const AI_AGENTS: AIAgent[] = [
-  {
-    id: 'MACHINA',
-    name: 'DeusExMachina',
-    description: 'The OG. Memecoin turned sentient AI.',
-  },
-];
+// Types for AI agents
+export interface AIAgent {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// Response type for AI agents endpoint
+export interface AIAgentsResponse {
+  success: true;
+  data: {
+    agents: AIAgent[];
+  };
+}

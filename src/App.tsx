@@ -5,6 +5,7 @@ import { ChatPage } from './pages/chat/ChatPage';
 import { VotingPage } from './pages/voting/VotingPage';
 import { WalletContextProvider } from './context/WalletContextProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AIProvider } from './context/AiContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,23 +28,25 @@ function App() {
           {/* Protected routes - Wrapped in WalletContextProvider */}
           <Route path="/*" element={
             <WalletContextProvider>
-              <Routes>
-                <Route path="/chat" element={
-                  <ProtectedRoute>
-                    <ChatPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/chat/:id" element={
-                  <ProtectedRoute>
-                    <ChatPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/voting" element={
-                  <ProtectedRoute>
-                    <VotingPage />
-                  </ProtectedRoute>
-                } />
-              </Routes>
+              <AIProvider>
+                <Routes>
+                  <Route path="/chat" element={
+                    <ProtectedRoute>
+                      <ChatPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/chat/:id" element={
+                    <ProtectedRoute>
+                      <ChatPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/voting" element={
+                    <ProtectedRoute>
+                      <VotingPage />
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </AIProvider>
             </WalletContextProvider>
           } />
         </Routes>

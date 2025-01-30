@@ -3,103 +3,125 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Message, ApiResponse, ChatResponse, MessagesResponse } from '@/types/message.types';
+import { useAI } from '@/context/AiContext';
 import { ChatMessage } from './ChatMessage';
 
 export function ChatWindow() {
-  const { id: conversationId } = useParams<{ id?: string }>(); // Explicitly type useParams
+  const { id: conversationId } = useParams<{ id?: string }>();
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { selectedAgent } = useAI();
 
-  // Fetch messages using React Query
+  // Fetch conversation details to get the current conversation's AI agent
+  const { data: currentConversation } = useQuery({
+    queryKey: ['conversation', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return null;
+      const { data } = await api.get(`/api/chat/conversations/${conversationId}`);
+      return data.data;
+    },
+    enabled: !!conversationId,
+  });
+
+  // Fetch messages
   const { data: messagesData } = useQuery<MessagesResponse>({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      if (!conversationId) return { messages: [] }; // Handle undefined conversationId
+      if (!conversationId) return { messages: [] };
       const { data } = await api.get<ApiResponse<MessagesResponse>>(
         `/api/chat/conversations/${conversationId}/messages`
       );
       return data.data;
     },
-    enabled: !!conversationId, // Only fetch if conversationId exists
-    refetchOnWindowFocus: false,
-    gcTime: 60_000, // Adjust cache time as needed
+    enabled: !!conversationId,
   });
 
   const messages = messagesData?.messages || [];
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timeoutId = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [messages]);
 
-  // Send message mutation with proper typing
+  // Check if we need to start a new conversation based on selected agent
+  const shouldStartNewConversation = () => {
+    if (!conversationId) return true;
+    if (!currentConversation) return true;
+    return currentConversation.aiName !== selectedAgent?.id;
+  };
+
+  // Send message mutation
   const sendMessage = useMutation<
   ApiResponse<ChatResponse>,
   Error,
   string,
-  { previousMessages?: MessagesResponse } // Add context type for rollback
+  { previousMessages?: MessagesResponse }
 >({
     mutationFn: async (content) => {
+      if (!selectedAgent) throw new Error('No AI agent selected');
+
+      const shouldCreateNew = shouldStartNewConversation();
+
       const { data } = await api.post<ApiResponse<ChatResponse>>('/api/chat/send', {
         content,
-        conversationId, // undefined is acceptable for new conversations
-        aiName: 'MACHINA',
+        conversationId: shouldCreateNew ? undefined : conversationId,
+        aiName: selectedAgent.id,
       });
       return data;
     },
     onMutate: async (content) => {
-      // Get previous messages for rollback
       const previousMessages = queryClient.getQueryData<MessagesResponse>(['messages', conversationId]);
 
-      // Optimistic update: add pending user message
       const userMessage: Message = {
         role: 'user',
         content,
         timestamp: new Date(),
         pending: true,
-        conversationId: conversationId || undefined, // Use undefined instead of null
+        conversationId: conversationId || undefined,
       };
 
-      // Update the query cache with the new message
       queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
         messages: [...(old?.messages || []), userMessage],
       }));
 
-      return { previousMessages, content }; // Return context for rollback
+      return { previousMessages, content };
     },
     onSuccess: (response, content) => {
       const newConversationId = response.data.chatResponse.conversationId;
+      const isNewConversation = shouldStartNewConversation();
 
-      if (newConversationId && !conversationId) {
+      if (isNewConversation) {
         // Handle new conversation
-        const currentMessages = queryClient.getQueryData<MessagesResponse>(['messages', undefined])?.messages || [];
-        const updatedMessages = currentMessages
-        .map((msg) => (msg.content === content ? { ...msg, pending: false } : msg))
-        .concat({
-          role: 'assistant',
-          content: response.data.chatResponse.response,
-          timestamp: new Date(),
-          conversationId: newConversationId,
-        });
+        const updatedMessages = [
+          {
+            role: 'user',
+            content,
+            timestamp: new Date(),
+            conversationId: newConversationId,
+          },
+          {
+            role: 'assistant',
+            content: response.data.chatResponse.response,
+            timestamp: new Date(),
+            conversationId: newConversationId,
+          }
+        ];
 
-        // Set messages for new conversation
         queryClient.setQueryData(['messages', newConversationId], { messages: updatedMessages });
-        queryClient.removeQueries({ queryKey: ['messages', undefined] });
-
-        // Navigate to new conversation
         navigate(`/chat/${newConversationId}`, { replace: true });
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
       } else {
         // Update existing conversation messages
         queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => {
           const updatedMessages = (old?.messages || [])
-          .map((msg) =>
-            msg.content === content && msg.pending ? { ...msg, pending: false } : msg
-          );
+          .map((msg) => (msg.content === content && msg.pending ? { ...msg, pending: false } : msg));
 
           const aiMessage: Message = {
             role: 'assistant',
@@ -113,17 +135,15 @@ export function ChatWindow() {
       }
     },
     onError: (_error, content, context) => {
-      // Rollback optimistic update
       if (context?.previousMessages) {
         queryClient.setQueryData(['messages', conversationId], context.previousMessages);
       }
 
-      // Show error message
       const errorMessage: Message = {
         role: 'assistant',
         content: 'Failed to send message. Please try again.',
         timestamp: new Date(),
-        conversationId: conversationId || undefined, // Use undefined instead of null
+        conversationId: conversationId || undefined,
       };
 
       queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
@@ -140,7 +160,7 @@ export function ChatWindow() {
     e.preventDefault();
     const trimmedMessage = message.trim();
 
-    if (!trimmedMessage || sendMessage.isPending) return;
+    if (!trimmedMessage || sendMessage.isPending || !selectedAgent) return;
 
     setMessage('');
     sendMessage.mutate(trimmedMessage);
@@ -156,7 +176,7 @@ export function ChatWindow() {
             message={msg}
           />
         ))}
-        <div ref={messagesEndRef} /> {/* Scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
@@ -166,13 +186,13 @@ export function ChatWindow() {
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Send a message..."
-            disabled={sendMessage.isPending}
+            placeholder={selectedAgent ? "Send a message..." : "Select an AI agent to start chatting"}
+            disabled={sendMessage.isPending || !selectedAgent}
             className="flex-1 bg-neutral-900 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={sendMessage.isPending || !message.trim()}
+            disabled={sendMessage.isPending || !message.trim() || !selectedAgent}
             className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Send className="w-5 h-5" />
