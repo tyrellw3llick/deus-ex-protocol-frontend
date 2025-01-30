@@ -1,132 +1,178 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  conversationId: string;
-}
+import { Message, ApiResponse, ChatResponse, MessagesResponse } from '@/types/message.types';
+import { ChatMessage } from './ChatMessage';
 
 export function ChatWindow() {
-  const { id: conversationId } = useParams();
+  const { id: conversationId } = useParams<{ id?: string }>(); // Explicitly type useParams
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  // Fetch messages
-  const { data: messagesData, isLoading, error } = useQuery({
+  // Fetch messages using React Query
+  const { data: messagesData } = useQuery<MessagesResponse>({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      if (!conversationId) return null;
-      const response = await api.get(`/api/chat/conversations/${conversationId}/messages`);
-      return response.data.data;
+      if (!conversationId) return { messages: [] }; // Handle undefined conversationId
+      const { data } = await api.get<ApiResponse<MessagesResponse>>(
+        `/api/chat/conversations/${conversationId}/messages`
+      );
+      return data.data;
     },
-    enabled: !!conversationId,
+    enabled: !!conversationId, // Only fetch if conversationId exists
+    refetchOnWindowFocus: false,
+    gcTime: 60_000, // Adjust cache time as needed
   });
 
-  // Send message mutation
-  const mutation = useMutation({
-    mutationFn: async (content: string) => {
-      const response = await api.post('/api/chat/send', {
-        content,
-        conversationId,
-        aiName: 'MACHINA'
-      });
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate and refetch messages
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      setMessage('');
-    },
-  });
+  const messages = messagesData?.messages || [];
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messagesData]);
+  }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Send message mutation with proper typing
+  const sendMessage = useMutation<
+  ApiResponse<ChatResponse>,
+  Error,
+  string,
+  { previousMessages?: MessagesResponse } // Add context type for rollback
+>({
+    mutationFn: async (content) => {
+      const { data } = await api.post<ApiResponse<ChatResponse>>('/api/chat/send', {
+        content,
+        conversationId, // undefined is acceptable for new conversations
+        aiName: 'MACHINA',
+      });
+      return data;
+    },
+    onMutate: async (content) => {
+      // Get previous messages for rollback
+      const previousMessages = queryClient.getQueryData<MessagesResponse>(['messages', conversationId]);
+
+      // Optimistic update: add pending user message
+      const userMessage: Message = {
+        role: 'user',
+        content,
+        timestamp: new Date(),
+        pending: true,
+        conversationId: conversationId || undefined, // Use undefined instead of null
+      };
+
+      // Update the query cache with the new message
+      queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
+        messages: [...(old?.messages || []), userMessage],
+      }));
+
+      return { previousMessages, content }; // Return context for rollback
+    },
+    onSuccess: (response, content) => {
+      const newConversationId = response.data.chatResponse.conversationId;
+
+      if (newConversationId && !conversationId) {
+        // Handle new conversation
+        const currentMessages = queryClient.getQueryData<MessagesResponse>(['messages', undefined])?.messages || [];
+        const updatedMessages = currentMessages
+        .map((msg) => (msg.content === content ? { ...msg, pending: false } : msg))
+        .concat({
+          role: 'assistant',
+          content: response.data.chatResponse.response,
+          timestamp: new Date(),
+          conversationId: newConversationId,
+        });
+
+        // Set messages for new conversation
+        queryClient.setQueryData(['messages', newConversationId], { messages: updatedMessages });
+        queryClient.removeQueries({ queryKey: ['messages', undefined] });
+
+        // Navigate to new conversation
+        navigate(`/chat/${newConversationId}`, { replace: true });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      } else {
+        // Update existing conversation messages
+        queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => {
+          const updatedMessages = (old?.messages || [])
+          .map((msg) =>
+            msg.content === content && msg.pending ? { ...msg, pending: false } : msg
+          );
+
+          const aiMessage: Message = {
+            role: 'assistant',
+            content: response.data.chatResponse.response,
+            timestamp: new Date(),
+            conversationId: newConversationId || conversationId,
+          };
+
+          return { messages: [...updatedMessages, aiMessage] };
+        });
+      }
+    },
+    onError: (_error, content, context) => {
+      // Rollback optimistic update
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['messages', conversationId], context.previousMessages);
+      }
+
+      // Show error message
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'Failed to send message. Please try again.',
+        timestamp: new Date(),
+        conversationId: conversationId || undefined, // Use undefined instead of null
+      };
+
+      queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
+        messages: [
+          ...(old?.messages?.filter((msg) => !(msg.content === content && msg.pending)) || []),
+          errorMessage,
+        ],
+      }));
+    },
+  });
+
+  // Handle message submission
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    const trimmedMessage = message.trim();
 
-    mutation.mutate(message);
+    if (!trimmedMessage || sendMessage.isPending) return;
+
+    setMessage('');
+    sendMessage.mutate(trimmedMessage);
   };
-
-  if (error) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-red-500">
-        Failed to load messages
-      </div>
-    );
-  }
-
-  if (!conversationId) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 space-y-4">
-        <p className="text-lg">Select a conversation or start a new one</p>
-        <p className="text-sm">Your messages with DeusExMachina will appear here</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-primary">Loading messages...</div>
-          </div>
-        ) : (
-            messagesData?.messages.map((msg: Message, index: number) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex flex-col max-w-[80%] space-y-2",
-                  msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-lg px-4 py-2",
-                    msg.role === 'user' 
-                      ? "bg-primary text-white" 
-                      : "bg-neutral-800 text-neutral-100"
-                  )}
-                >
-                  {msg.content}
-                </div>
-                <span className="text-xs text-neutral-500">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            ))
-          )}
-        <div ref={messagesEndRef} />
+        {messages.map((msg, index) => (
+          <ChatMessage
+            key={`${msg.content}-${index}-${msg.timestamp}`}
+            message={msg}
+          />
+        ))}
+        <div ref={messagesEndRef} /> {/* Scroll anchor */}
       </div>
 
       {/* Message Input */}
-      <form 
-        onSubmit={handleSubmit}
-        className="border-t border-neutral-800 p-4"
-      >
+      <form onSubmit={handleSubmit} className="border-t border-neutral-800 p-4">
         <div className="flex space-x-4">
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 bg-neutral-900 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Send a message..."
+            disabled={sendMessage.isPending}
+            className="flex-1 bg-neutral-900 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={mutation.isPending || !message.trim()}
+            disabled={sendMessage.isPending || !message.trim()}
             className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Send className="w-5 h-5" />

@@ -33,8 +33,8 @@ export interface AIAgent {
 // For now we'll hardcode the AI agents since they're not dynamic
 export const AI_AGENTS: AIAgent[] = [
   {
-    id: "MACHINA",
-    name: "DeusExMachina",
-    description: "The OG. Memecoin turned sentient AI.",
+    id: 'MACHINA',
+    name: 'DeusExMachina',
+    description: 'The OG. Memecoin turned sentient AI.',
   },
 ];
