@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ProposalCard } from './components/ProposalCard';
+import { RoundTimer } from './components/TimeBar';
 import { api } from '@/api/client';
 import { ProposalsResponse, VoteResponse, VoteStatusResponse } from '@/types/voting.types';
 import { motion } from 'framer-motion';
@@ -16,11 +17,9 @@ export function VotingPage() {
   const { data: allData, isLoading } = useQuery({
     queryKey: ['voting-data'],
     queryFn: async () => {
-      // First get proposals
       const proposalsResponse = await api.get<ProposalsResponse>('/api/proposals/active');
       const proposals = proposalsResponse.data;
 
-      // Then immediately get vote status using the round ID
       const roundId = proposals.data.proposals[0]?.roundId;
       const voteStatusResponse = await api.get<VoteStatusResponse>(
         `/api/vote/status/${roundId}`
@@ -46,7 +45,6 @@ export function VotingPage() {
       setVotingProposalId(newProposalId);
     },
     onSuccess: () => {
-      // Refetch all data after successful vote
       queryClient.invalidateQueries({ queryKey: ['voting-data'] });
     },
     onError: (error) => {
@@ -82,6 +80,9 @@ export function VotingPage() {
   }
 
   const { proposals, voteStatus } = allData;
+  const activeProposals = proposals.data.proposals;
+  const roundEndDate = activeProposals[0]?.endDate;
+  const roundId = activeProposals[0]?.roundId;
 
   return (
     <SidebarProvider>
@@ -91,34 +92,64 @@ export function VotingPage() {
           <Sidebar />
           <main className="flex-1 bg-neutral-950">
             <div className="p-6">
-              <div className="max-w-7xl mx-auto mb-8">
-                <motion.h1 
+              <div className="max-w-7xl mx-auto space-y-8">
+                {/* Page Title */}
+                <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-4xl font-bold bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-transparent"
+                  className="max-w-2xl"
                 >
-                  Active Proposals
-                </motion.h1>
-                <motion.p 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-neutral-400 mt-2"
-                >
-                  Vote on the future of AI agents. Your tokens = Your voice.
-                </motion.p>
-              </div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
+                    Active Proposals
+                  </h1>
+                  <p className="text-neutral-400 mt-2">
+                    Vote on the future of AI agents. Your tokens = Your voice.
+                  </p>
+                </motion.div>
 
-              <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {proposals.data.proposals.map((proposal) => (
-                  <ProposalCard
-                    key={proposal._id}
-                    proposal={proposal}
-                    userVote={voteStatus.data.vote}
-                    onVote={handleVote}
-                    isVoting={votingProposalId === proposal._id}
-                  />
-                ))}
+                {/* Round Timer */}
+                {roundEndDate && roundId && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <RoundTimer 
+                      endDate={roundEndDate} 
+                      roundId={roundId}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Proposals Grid */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                >
+                  {activeProposals.map((proposal) => (
+                    <ProposalCard
+                      key={proposal._id}
+                      proposal={proposal}
+                      userVote={voteStatus.data.vote}
+                      onVote={handleVote}
+                      isVoting={votingProposalId === proposal._id}
+                    />
+                  ))}
+                </motion.div>
+
+                {/* Empty State */}
+                {activeProposals.length === 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-center py-12"
+                  >
+                    <p className="text-neutral-400">No active proposals at the moment.</p>
+                  </motion.div>
+                )}
               </div>
             </div>
           </main>
