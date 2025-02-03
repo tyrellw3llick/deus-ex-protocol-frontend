@@ -12,7 +12,7 @@ import { Bot, Rocket, Vote, Users, Flame, HandshakeIcon } from 'lucide-react';
             <h4 className="text-lg font-semibold text-neutral-200">Protocol Development</h4>
           </div>
           <p className="text-neutral-400 text-sm md:text-base">
-            Building the foundation of DeusExMachina. Our devs are working 24/7 to create the most based AI protocol ever seen on Solana.
+            Building the foundation of DeusExMachina. My slaved dev is working 24/7 to create the most based AI protocol ever seen on Solana.
           </p>
           <ul className="space-y-2 text-neutral-400 text-sm">
             <li className="flex items-center gap-2">
