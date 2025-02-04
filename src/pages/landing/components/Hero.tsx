@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react"
 import { FlipWords } from "@/components/ui/flip-words";
 import { XSocial } from "@/components/XSocial";
 import { Send } from "lucide-react";
+import deepSeekLogo from "@/assets/deepseek.webp";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export function Hero() {
           >
             <span className="font-medium">DeepSeek</span>
             <img 
-              src="/public/images/deepseek.webp" 
+              src={deepSeekLogo} 
               alt="DeepSeek Logo" 
               className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity"
             />

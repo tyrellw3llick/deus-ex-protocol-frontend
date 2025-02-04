@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const apiUrl =
+  import.meta.env.VITE_BACKEND_API_URL || 'https://api.deusexprotocol.com';
+console.log('Creating API client with URL:', apiUrl);
+
 export const api = axios.create({
-  baseURL: import.meta.env.BACKEND_API_URL,
+  baseURL: apiUrl,
   headers: {
     'Content-Type': 'application/json',
   },
