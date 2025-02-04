@@ -6,6 +6,7 @@ import { VotingPage } from './pages/voting/VotingPage';
 import { WalletContextProvider } from './context/WalletContextProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AIProvider } from './context/AiContext';
+import { Analytics } from '@vercel/analytics/react'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,7 +25,7 @@ function App() {
         <Routes>
           {/* Public route - Landing page */}
           <Route path="/" element={<LandingPage />} />
-          
+
           {/* Protected routes - Wrapped in WalletContextProvider */}
           <Route path="/*" element={
             <WalletContextProvider>
@@ -50,6 +51,7 @@ function App() {
             </WalletContextProvider>
           } />
         </Routes>
+        <Analytics />
       </Router>
     </QueryClientProvider>
   );
