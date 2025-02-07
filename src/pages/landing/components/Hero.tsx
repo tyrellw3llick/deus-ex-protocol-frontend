@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react"
 import { FlipWords } from "@/components/ui/flip-words";
 import { XSocial } from "@/components/XSocial";
 import { Send } from "lucide-react";
-import deepSeekLogo from "@/assets/deepseek.webp";
+import SolanaLogo from "@/assets/solana_logo.svg";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -61,22 +61,15 @@ export function Hero() {
           </a>
         </div>
 
-        {/* DeepSeek Section - Updated styling */}
+        {/* Solana Section - Updated styling */}
         <div className="flex items-center gap-1 mt-6 z-20">
           <p className="text-neutral-400 text-sm">Powered by</p>
-          <a 
-            href="https://deepseek.com" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex items-center gap-2 text-neutral-400 hover:text-neutral-300 transition-colors group"
-          >
-            <span className="font-medium">DeepSeek</span>
+            <span className="text-neutral-400 font-medium">Solana</span>
             <img 
-              src={deepSeekLogo} 
+              src={SolanaLogo} 
               alt="DeepSeek Logo" 
               className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity"
             />
-          </a>
         </div>
       </div>
 
