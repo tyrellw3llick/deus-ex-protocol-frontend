@@ -1,27 +1,68 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/api/client';
-import { Send } from 'lucide-react';
-import { Message, ApiResponse, ChatResponse, MessagesResponse } from '@/types/message.types';
-import { ChatMessage } from './ChatMessage';
-import { useAI } from '@/context/AiContext';
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/api/client";
+import { ExternalLink, Send } from "lucide-react";
+import {
+  Message,
+  ApiResponse,
+  ChatResponse,
+  MessagesResponse,
+} from "@/types/message.types";
+import { ChatMessage } from "./ChatMessage";
+import { useAI } from "@/context/AiContext";
+import { BackgroundBeams } from "@/components/ui/bg-beams";
+import { UserData } from "@/types/user.types";
 
 export function ChatWindow() {
   const { id: conversationId } = useParams<{ id?: string }>(); // Explicitly type useParams
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const aiAgent = useAI();
 
+  const userData = (() => {
+    const stored = sessionStorage.getItem("userData");
+    return stored ? (JSON.parse(stored) as UserData) : null;
+  })();
+
+  // If user has no tokens, show pre-launch message
+  if (!userData?.tokenBalance) {
+    return (
+      <div className="relative h-[calc(100vh-4rem)] w-full flex flex-col items-center justify-center bg-neutral-950 p-4">
+        <div className="relative z-10 max-w-md mx-auto text-center space-y-6">
+          <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
+            $MACHINA Token Coming Soon
+          </h2>
+
+          <p className="text-neutral-400 text-sm md:text-base">
+            The token hasn't been launched yet. If you want to test the protocol
+            before launch, please DM @DeusExDev on X.
+          </p>
+
+          <a
+            href="https://x.com/DeusExDev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+          >
+            <span>Contact Developer</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
+        <BackgroundBeams className="z-0" />
+      </div>
+    );
+  }
+
   // Fetch messages using React Query
   const { data: messagesData } = useQuery<MessagesResponse>({
-    queryKey: ['messages', conversationId],
+    queryKey: ["messages", conversationId],
     queryFn: async () => {
       if (!conversationId) return { messages: [] }; // Handle undefined conversationId
       const { data } = await api.get<ApiResponse<MessagesResponse>>(
-        `/api/chat/conversations/${conversationId}/messages`
+        `/api/chat/conversations/${conversationId}/messages`,
       );
       return data.data;
     },
@@ -34,31 +75,37 @@ export function ChatWindow() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Send message mutation with proper typing
   const sendMessage = useMutation<
-  ApiResponse<ChatResponse>,
-  Error,
-  string,
-  { previousMessages?: MessagesResponse } // Add context type for rollback
->({
+    ApiResponse<ChatResponse>,
+    Error,
+    string,
+    { previousMessages?: MessagesResponse } // Add context type for rollback
+  >({
     mutationFn: async (content) => {
-      const { data } = await api.post<ApiResponse<ChatResponse>>('/api/chat/send', {
-        content,
-        conversationId, // undefined is acceptable for new conversations
-        aiName: aiAgent.selectedAgent?.id,
-      });
+      const { data } = await api.post<ApiResponse<ChatResponse>>(
+        "/api/chat/send",
+        {
+          content,
+          conversationId, // undefined is acceptable for new conversations
+          aiName: aiAgent.selectedAgent?.id,
+        },
+      );
       return data;
     },
     onMutate: async (content) => {
       // Get previous messages for rollback
-      const previousMessages = queryClient.getQueryData<MessagesResponse>(['messages', conversationId]);
+      const previousMessages = queryClient.getQueryData<MessagesResponse>([
+        "messages",
+        conversationId,
+      ]);
 
       // Optimistic update: add pending user message
       const userMessage: Message = {
-        role: 'user',
+        role: "user",
         content,
         timestamp: new Date(),
         pending: true,
@@ -66,9 +113,12 @@ export function ChatWindow() {
       };
 
       // Update the query cache with the new message
-      queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
-        messages: [...(old?.messages || []), userMessage],
-      }));
+      queryClient.setQueryData<MessagesResponse>(
+        ["messages", conversationId],
+        (old) => ({
+          messages: [...(old?.messages || []), userMessage],
+        }),
+      );
 
       return { previousMessages, content }; // Return context for rollback
     },
@@ -77,62 +127,80 @@ export function ChatWindow() {
 
       if (newConversationId && !conversationId) {
         // Handle new conversation
-        const currentMessages = queryClient.getQueryData<MessagesResponse>(['messages', undefined])?.messages || [];
+        const currentMessages =
+          queryClient.getQueryData<MessagesResponse>(["messages", undefined])
+            ?.messages || [];
         const updatedMessages = currentMessages
-        .map((msg) => (msg.content === content ? { ...msg, pending: false } : msg))
-        .concat({
-          role: 'assistant',
-          content: response.data.chatResponse.response,
-          timestamp: new Date(),
-          conversationId: newConversationId,
-        });
+          .map((msg) =>
+            msg.content === content ? { ...msg, pending: false } : msg,
+          )
+          .concat({
+            role: "assistant",
+            content: response.data.chatResponse.response,
+            timestamp: new Date(),
+            conversationId: newConversationId,
+          });
 
         // Set messages for new conversation
-        queryClient.setQueryData(['messages', newConversationId], { messages: updatedMessages });
-        queryClient.removeQueries({ queryKey: ['messages', undefined] });
+        queryClient.setQueryData(["messages", newConversationId], {
+          messages: updatedMessages,
+        });
+        queryClient.removeQueries({ queryKey: ["messages", undefined] });
 
         // Navigate to new conversation
         navigate(`/chat/${newConversationId}`, { replace: true });
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       } else {
         // Update existing conversation messages
-        queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => {
-          const updatedMessages = (old?.messages || [])
-          .map((msg) =>
-            msg.content === content && msg.pending ? { ...msg, pending: false } : msg
-          );
+        queryClient.setQueryData<MessagesResponse>(
+          ["messages", conversationId],
+          (old) => {
+            const updatedMessages = (old?.messages || []).map((msg) =>
+              msg.content === content && msg.pending
+                ? { ...msg, pending: false }
+                : msg,
+            );
 
-          const aiMessage: Message = {
-            role: 'assistant',
-            content: response.data.chatResponse.response,
-            timestamp: new Date(),
-            conversationId: newConversationId || conversationId,
-          };
+            const aiMessage: Message = {
+              role: "assistant",
+              content: response.data.chatResponse.response,
+              timestamp: new Date(),
+              conversationId: newConversationId || conversationId,
+            };
 
-          return { messages: [...updatedMessages, aiMessage] };
-        });
+            return { messages: [...updatedMessages, aiMessage] };
+          },
+        );
       }
     },
     onError: (_error, content, context) => {
       // Rollback optimistic update
       if (context?.previousMessages) {
-        queryClient.setQueryData(['messages', conversationId], context.previousMessages);
+        queryClient.setQueryData(
+          ["messages", conversationId],
+          context.previousMessages,
+        );
       }
 
       // Show error message
       const errorMessage: Message = {
-        role: 'assistant',
-        content: 'Failed to send message. Please try again.',
+        role: "assistant",
+        content: "Failed to send message. Please try again.",
         timestamp: new Date(),
         conversationId: conversationId || undefined, // Use undefined instead of null
       };
 
-      queryClient.setQueryData<MessagesResponse>(['messages', conversationId], (old) => ({
-        messages: [
-          ...(old?.messages?.filter((msg) => !(msg.content === content && msg.pending)) || []),
-          errorMessage,
-        ],
-      }));
+      queryClient.setQueryData<MessagesResponse>(
+        ["messages", conversationId],
+        (old) => ({
+          messages: [
+            ...(old?.messages?.filter(
+              (msg) => !(msg.content === content && msg.pending),
+            ) || []),
+            errorMessage,
+          ],
+        }),
+      );
     },
   });
 
@@ -143,7 +211,7 @@ export function ChatWindow() {
 
     if (!trimmedMessage || sendMessage.isPending) return;
 
-    setMessage('');
+    setMessage("");
     sendMessage.mutate(trimmedMessage);
   };
 
