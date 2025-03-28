@@ -1,5 +1,9 @@
 # Deus Ex Protocol Frontend Development Brief
 
+### Demo:
+
+[Watch the product demo here](https://www.youtube.com/watch?v=R_TMCzLqK5k)
+
 ## Project Overview
 Deus Ex Protocol is a decentralized AI chatbot protocol powered by $MACHINA token on Solana. It's a solo indie project following the KISS (Keep It Simple, Stupid) principle, focused on building an MVP that demonstrates core functionality without unnecessary complexity.
 
